@@ -1,0 +1,18 @@
+windows:
+  hosts:
+    ms-server1:
+      ansible_host: 0.0.0.0
+      ansible_user: example_user
+      ansible_password: "example_password"
+      ansible_connection: winrm
+      ansible_winrm_transport: basic
+      ansible_winrm_server_cert_validation: ignore
+      ansible_port: 5985
+    ms-server2:
+      ansible_host: 0.0.0.0
+      ansible_user: example_user
+      ansible_password: "example_password"
+      ansible_connection: winrm
+      ansible_winrm_transport: basic
+      ansible_winrm_server_cert_validation: ignore
+      ansible_port: 5985

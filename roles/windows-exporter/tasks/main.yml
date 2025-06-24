@@ -1,0 +1,84 @@
+---
+- name: Проверка корректности значений переменных сервиса
+  assert:
+    that:
+      - windows_exporter_state == 'started' and windows_exporter_start_mode != 'disabled'
+    fail_msg: "You cannot manage the service with the windows_exporter_state and windows_exporter_start_mode settings"
+
+- name: Проверка текущей версии windows_exporter
+  win_command: "{{ windows_exporter_bin_path }} --version"
+  failed_when: false
+  changed_when: false
+  register: windows_exporter_version_check
+
+- name: Проверка наличия установленного windows_exporter
+  win_stat: 
+    path: "{{ windows_exporter_bin_path }}"
+  register: windows_exporter_installed_check
+
+- name: Загрузка windows_exporter
+  win_get_url:
+    url: "{{ windows_exporter_download_url }}"
+    dest: '%temp%\windows_exporter_install.msi'
+  when: >
+    windows_exporter_version_check.stderr is not defined
+    or windows_exporter_version not in windows_exporter_version_check.stderr
+    or not windows_exporter_installed_check.stat.exists
+  register: windows_exporter_download_check
+
+- name: Создание строки параметров
+  tags:
+    test
+  block:
+    - name: Формирование списка параметров
+      set_fact:
+        windows_exporter_options: "{{ windows_exporter_options|default([]) + [item.key + '=' + item.value|string] if item.value is defined }}"
+      with_dict:
+        - LISTEN_ADDR: "{{ windows_exporter_listen_address }}"
+        - LISTEN_PORT: "{{ windows_exporter_listen_port }}"
+        - TEXTFILE_DIR: "{{ windows_exporter_textfile_dir }}"
+
+    - name: Объединение параметров в строку
+      set_fact:
+        windows_exporter_options_string: "{{ ' '.join(windows_exporter_options) }}"
+
+- name: Установка windows_exporter
+  win_package:
+    path: '{{ ansible_env.TEMP }}\windows_exporter_install.msi'
+    state: present
+    arguments: "{{ windows_exporter_options_string }}"
+  when: >
+    windows_exporter_version_check.stderr is not defined
+    or windows_exporter_version not in windows_exporter_version_check.stderr
+    or not windows_exporter_installed_check.stat.exists
+  register: windows_exporter_install_check
+  notify: restart windows_exporter
+
+- name: Проверка состояния брандмауэра
+  win_shell: Get-NetFirewallProfile | Where-Object {$_.Enabled -eq $true} | fl Enabled
+  changed_when: false
+  register: firewall_enabled
+
+- name: Добавление правила брандмауэра для доступа Prometheus к порту {{ windows_exporter_listen_port }} TCP
+  win_firewall_rule:
+    name: prometheus_exporter
+    localport: "{{ windows_exporter_listen_port }}"
+    action: allow
+    direction: in
+    protocol: tcp
+    remoteip: "{{ windows_exporter_allow_from | default(hostvars[inventory_hostname].ansible_host) }}"
+    state: present
+    enabled: true
+  when: firewall_enabled.stdout | length > 0
+
+- name: Настройка сервиса windows_exporter
+  ansible.windows.win_service:
+    name: windows_exporter
+    start_mode: "{{ windows_exporter_start_mode }}"
+    state: "{{ windows_exporter_state }}"
+
+- name: Проверка доступности windows_exporter
+  win_command: "{{ windows_exporter_bin_path }} --version"
+  failed_when: false
+  changed_when: false
+  register: windows_exporter_version_check
