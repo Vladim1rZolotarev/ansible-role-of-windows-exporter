@@ -34,14 +34,16 @@ windows_server_ansible/
 ## Требования
 
 ### Управляющий узел (Control Node)
+
 - Ansible 2.9+
 - Python 3.6+
 - Модуль `ansible.windows`
 
 ### Целевые серверы (Windows)
+
 - Windows Server 2012 R2 / Windows 10 или новее
 - PowerShell 3.0+
-- WinRM настроен и доступен
+- WinRM настроен и доступен (запустите с правами администратора winrm_configuration.ps1)
 - .NET Framework 4.5+
 
 ## Установка зависимостей
@@ -111,5 +113,4 @@ ansible-playbook -i inventory.yml playbook.yml --limit ms-server1
 ansible-playbook -i inventory.yml playbook.yml --check
 ```
 
-
-**Примечание:** Убедитесь, что у вас есть соответствующие права доступа к целевым Windows серверам и что WinRM правильно настроен перед запуском плейбука.
+**Примечание:** Убедитесь, что у вас есть соответствующие права доступа к целевым Windows серверам и что WinRM правильно настроен (для настройки запустите на целевом сервере winrm_configuration.ps1) перед запуском плейбука.
