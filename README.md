@@ -118,4 +118,4 @@ ansible-playbook -i inventory.yml playbook.yml --check
 
 **Примечание:** Убедитесь, что у вас есть соответствующие права доступа к целевым Windows серверам и что WinRM правильно настроен (для настройки запустите на целевом сервере winrm_configuration.ps1) перед запуском плейбука.
 
-### Для визуализации полученных с помощью `Windows Exporter` метрик импортировать `dashboard_for_grafana.json` в `Grafana`, предварительно настроив конфиг `Prometheus` для работы с `Windows Exporter` и выбрав его в качестве `Источника данных`.
+Для визуализации полученных с помощью `Windows Exporter` метрик импортировать `dashboard_for_grafana.json` в `Grafana`, предварительно настроив конфиг `Prometheus` для работы с `Windows Exporter` и выбрав его в качестве `Источника данных`.
